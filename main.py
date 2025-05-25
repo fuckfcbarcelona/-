@@ -1,5 +1,5 @@
-import threading
 import time
+import threading
 import feedparser
 import requests
 from flask import Flask
@@ -25,35 +25,32 @@ def send_photo(chat_id, photo_url, caption):
     payload = {"chat_id": chat_id, "photo": photo_url, "caption": caption}
     requests.post(url, data=payload)
 
-def rss_checker():
+def rss_loop():
     while True:
         print("====== بررسی RSS ها شروع شد ======")
         for feed_url in RSS_FEED_URLS:
-            print(f"بررسی: {feed_url}")
             feed = feedparser.parse(feed_url)
             for entry in feed.entries:
                 link = entry.link
                 title = entry.title
                 image_url = entry.get("media_content", [{}])[0].get("url")
                 if link not in sent_posts:
-                    print(f"ارسال پست جدید: {title}")
                     if image_url:
-                        caption = f"{title}\n\n{link}"
-                        send_photo(CHAT_ID, image_url, caption)
+                        send_photo(CHAT_ID, image_url, f"{title}\n\n{link}")
                     else:
-                        message = f"{title}\n\n{link}"
-                        send_message(CHAT_ID, message)
+                        send_message(CHAT_ID, f"{title}\n\n{link}")
                     sent_posts.add(link)
-        print(f"[+] منتظر {CHECK_INTERVAL} ثانیه بعدی...\n")
         time.sleep(CHECK_INTERVAL)
 
-# === Flask app فقط برای باز کردن پورت ===
+# === اجرای حلقه RSS در یک ترد جدا ===
+threading.Thread(target=rss_loop, daemon=True).start()
+
+# === اجرای سرور Flask برای زنده نگه‌داشتن سرویس ===
 app = Flask(__name__)
 
 @app.route('/')
 def home():
-    return 'RSS Bot is running!'
+    return 'RSS Bot is running.'
 
 if __name__ == '__main__':
-    threading.Thread(target=rss_checker).start()
-    app.run(host='0.0.0.0', port=8000)
+    app.run(host='0.0.0.0', port=8080)
