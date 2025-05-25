@@ -3,7 +3,11 @@ import requests
 import time
 
 # تنظیمات اصلی
-RSS_FEED_URL = "https://example.com/rss"  # ← آدرس فید RSS رو اینجا بذار
+RSS_FEED_URLS = [
+    "https://rss.app/feeds/UwEFld8FM84WyGkc.xml",
+    "https://rss.app/feeds/ktIrhXzHl648lXd4.xml",
+    "https://rss.app/feeds/5EZtkXHJhUIKZuJS.xml"
+]  # ← آدرس فید RSS رو اینجا بذار
 TELEGRAM_TOKEN = "YOUR_BOT_TOKEN"
 TELEGRAM_CHAT_ID = "YOUR_CHAT_ID"
 
