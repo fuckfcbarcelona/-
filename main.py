@@ -67,3 +67,17 @@ def home():
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=10000)
+def send_to_telegram(message):
+    url = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendMessage"
+    data = {
+        "chat_id": TELEGRAM_CHAT_ID,
+        "text": message
+    }
+    try:
+        response = requests.post(url, data=data)
+        if response.status_code != 200:
+            print(f"خطا در ارسال پیام: {response.status_code} - {response.text}")
+        else:
+            print("پیام با موفقیت ارسال شد.")
+    except Exception as e:
+        print(f"خطای غیرمنتظره هنگام ارسال به تلگرام: {e}")
