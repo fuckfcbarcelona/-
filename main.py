@@ -12,7 +12,8 @@ RSS_FEED_URLS = [
     "https://rss.app/feeds/ktIrhXzHl648lXd4.xml",
     "https://rss.app/feeds/5EZtkXHJhUIKZuJS.xml"
 ]
-CHECK_INTERVAL = 30
+CHECK_INTERVAL = 30  # ثانیه بین هر چک
+
 sent_posts = set()
 
 def send_message(chat_id, text):
@@ -25,7 +26,7 @@ def send_photo(chat_id, photo_url, caption):
     payload = {"chat_id": chat_id, "photo": photo_url, "caption": caption}
     requests.post(url, data=payload)
 
-def rss_loop():
+def check_feeds():
     while True:
         print("====== بررسی RSS ها شروع شد ======")
         for feed_url in RSS_FEED_URLS:
@@ -34,23 +35,26 @@ def rss_loop():
                 link = entry.link
                 title = entry.title
                 image_url = entry.get("media_content", [{}])[0].get("url")
+
                 if link not in sent_posts:
                     if image_url:
-                        send_photo(CHAT_ID, image_url, f"{title}\n\n{link}")
+                        caption = f"{title}\n\n{link}"
+                        send_photo(CHAT_ID, image_url, caption)
                     else:
-                        send_message(CHAT_ID, f"{title}\n\n{link}")
+                        message = f"{title}\n\n{link}"
+                        send_message(CHAT_ID, message)
                     sent_posts.add(link)
         time.sleep(CHECK_INTERVAL)
 
-# === اجرای حلقه RSS در یک ترد جدا ===
-threading.Thread(target=rss_loop, daemon=True).start()
+# اجرای ربات در ترد جدا
+threading.Thread(target=check_feeds, daemon=True).start()
 
-# === اجرای سرور Flask برای زنده نگه‌داشتن سرویس ===
+# راه‌اندازی وب سرور برای Render
 app = Flask(__name__)
 
 @app.route('/')
 def home():
-    return 'RSS Bot is running.'
+    return "RSS Bot is running."
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=8080)
+    app.run(host="0.0.0.0", port=10000)
