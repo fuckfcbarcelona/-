@@ -1,70 +1,68 @@
-import feedparser
 import time
 import threading
-import json
-import os
+import feedparser
 import requests
 from flask import Flask
 
-# تنظیمات ربات
-RSS_FEED_URL = 'https://rss.app/feeds/5EZtkXHJhUIKZuJS.xml'
-TELEGRAM_BOT_TOKEN = 'توکن رباتت اینجا'
-TELEGRAM_CHAT_ID = 'آیدی عددی یا @کانالت'
+# === تنظیمات اصلی ===
+BOT_TOKEN = "7239519330:AAFaVbAsE1V-jQ4wQN9-BGO4-dXluv1aus"
+CHAT_ID = "-4665447944"
+RSS_FEED_URLS = [
+    "https://rss.app/feeds/UwEFld8FM84WyGkc.xml",
+    "https://rss.app/feeds/ktIrhXzHl648lXd4.xml",
+    "https://rss.app/feeds/5EZtkXHJhUIKZuJS.xml"
+]
+CHECK_INTERVAL = 30  # فاصله زمانی بین بررسی‌ها به ثانیه
+sent_posts = set()  # لیست لینک‌هایی که قبلاً ارسال شده‌اند
 
-# فایل ذخیره‌ی شناسه‌ها
-SENT_FILE = 'sent.json'
+def send_message(chat_id, text):
+    url = f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage"
+    payload = {"chat_id": chat_id, "text": text}
+    requests.post(url, data=payload)
 
-# Flask برای زنده نگه داشتن
+def send_photo(chat_id, photo_url, caption):
+    url = f"https://api.telegram.org/bot{BOT_TOKEN}/sendPhoto"
+    payload = {"chat_id": chat_id, "photo": photo_url, "caption": caption}
+    requests.post(url, data=payload)
+
+def check_feeds():
+    while True:
+        print("====== بررسی RSS ها شروع شد ======")
+        for feed_url in RSS_FEED_URLS:
+            print(f"بررسی: {feed_url}")
+            feed = feedparser.parse(feed_url)
+
+            new_entries = [entry for entry in feed.entries if entry.get("link") not in sent_posts]
+
+            for entry in new_entries[:10]:  # محدود به ۱۰ پست
+                link = entry.get("link")
+                title = entry.get("title", "بدون عنوان")
+                image_url = entry.get("media_content", [{}])[0].get("url")
+
+                print(f"ارسال پست جدید: {title}")
+
+                if image_url:
+                    caption = f"{title}\n\n{link}"
+                    send_photo(CHAT_ID, image_url, caption)
+                else:
+                    message = f"{title}\n\n{link}"
+                    send_message(CHAT_ID, message)
+
+                sent_posts.add(link)
+                time.sleep(2)  # تأخیر ۲ ثانیه‌ای بین پست‌ها
+
+        print(f"[+] منتظر {CHECK_INTERVAL} ثانیه...\n")
+        time.sleep(CHECK_INTERVAL)
+
+# اجرای موازی فیدخوان
+threading.Thread(target=check_feeds, daemon=True).start()
+
+# وب‌سرور ساده برای زنده نگه‌داشتن پروژه در Render یا Pydroid
 app = Flask(__name__)
 
 @app.route('/')
-def index():
-    return 'Bot is running'
+def home():
+    return 'Bot is running.'
 
-# بارگذاری پست‌های ارسال‌شده قبلی
-def load_sent_entries():
-    if os.path.exists(SENT_FILE):
-        with open(SENT_FILE, 'r') as f:
-            return set(json.load(f))
-    return set()
-
-# ذخیره‌سازی پست‌های ارسال‌شده
-def save_sent_entries(sent_entries):
-    with open(SENT_FILE, 'w') as f:
-        json.dump(list(sent_entries), f)
-
-# چک کردن فید و ارسال پست‌های جدید
-def check_feeds():
-    sent_entries = load_sent_entries()
-    while True:
-        try:
-            feed = feedparser.parse(RSS_FEED_URL)
-            for entry in reversed(feed.entries):
-                entry_id = entry.get('id', entry.get('link'))
-                if entry_id and entry_id not in sent_entries:
-                    title = entry.get('title', 'بدون عنوان')
-                    message = f"ارسال پست جدید: {title}"
-                    send_to_telegram(message)
-                    sent_entries.add(entry_id)
-                    save_sent_entries(sent_entries)
-                    time.sleep(2)  # فاصله بین پیام‌ها برای جلوگیری از بن
-            time.sleep(30)  # فاصله بین هر چک فید
-        except Exception as e:
-            print(f'خطا در چک کردن فید: {e}')
-            time.sleep(60)
-
-# ارسال به تلگرام
-def send_to_telegram(message):
-    url = f'https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendMessage'
-    data = {
-        'chat_id': TELEGRAM_CHAT_ID,
-        'text': message
-    }
-    requests.post(url, data=data)
-
-# اجرای چک فید در ترد جدا
-threading.Thread(target=check_feeds, daemon=True).start()
-
-# اجرای Flask
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=10000)
