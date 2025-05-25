@@ -1,37 +1,39 @@
 import feedparser
-import requests
 import time
+import requests
 
-# تنظیمات اصلی
+# لینک‌های RSS
 RSS_FEED_URLS = [
     "https://rss.app/feeds/UwEFld8FM84WyGkc.xml",
     "https://rss.app/feeds/ktIrhXzHl648lXd4.xml",
     "https://rss.app/feeds/5EZtkXHJhUIKZuJS.xml"
-]  # ← آدرس فید RSS رو اینجا بذار
-TELEGRAM_TOKEN = "YOUR_BOT_TOKEN"
-TELEGRAM_CHAT_ID = "YOUR_CHAT_ID"
+]
 
-last_sent_link = None
+# توکن ربات تلگرام
+TELEGRAM_BOT_TOKEN = "7239519330:AAFaVbAsE1V-jQX4wQN9-BGO4-dXluv1aus"
 
-def get_latest_post():
-    feed = feedparser.parse(RSS_FEED_URL)
-    if not feed.entries:
-        return None
-    return feed.entries[0]
+# آی‌دی عددی گروه تلگرام
+TELEGRAM_CHAT_ID = -4665447944
+
+# ذخیره پست‌های ارسال‌شده
+sent_links = set()
 
 def send_to_telegram(message):
-    url = f"https://api.telegram.org/bot{TELEGRAM_TOKEN}/sendMessage"
+    url = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendMessage"
     data = {
         "chat_id": TELEGRAM_CHAT_ID,
         "text": message,
-        "parse_mode": "HTML"
+        "disable_web_page_preview": False
     }
     requests.post(url, data=data)
 
 while True:
-    latest = get_latest_post()
-    if latest and latest.link != last_sent_link:
-        message = f"<b>{latest.title}</b>\n{latest.link}"
-        send_to_telegram(message)
-        last_sent_link = latest.link
-    time.sleep(30)  
+    for feed_url in RSS_FEED_URLS:
+        feed = feedparser.parse(feed_url)
+        for entry in feed.entries:
+            link = entry.link
+            if link not in sent_links:
+                sent_links.add(link)
+                message = f"{entry.title}\n{link}"
+                send_to_telegram(message)
+    time.sleep(30)
