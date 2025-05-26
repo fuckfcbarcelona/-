@@ -1,4 +1,4 @@
-۷import time
+import time
 import threading
 import feedparser
 import requests
