@@ -18,24 +18,26 @@ sent_links = set()
 # تابع ارسال پیام به تلگرام
 def send_to_telegram(title, link, image_url=None):
     message = f"<b>{title}</b>\n<a href='{link}'>مطالعه خبر</a>"
-    data = {
-        "chat_id": CHAT_ID,
-        "caption": message,
-        "parse_mode": "HTML"
-    }
+    
     if image_url:
-        data["photo"] = image_url
         url = f"https://api.telegram.org/bot{BOT_TOKEN}/sendPhoto"
+        data = {
+            "chat_id": CHAT_ID,
+            "caption": message,
+            "photo": image_url,
+            "parse_mode": "HTML"
+        }
     else:
+        url = f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage"
         data = {
             "chat_id": CHAT_ID,
             "text": message,
             "parse_mode": "HTML"
         }
-        url = f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage"
 
     try:
-        requests.post(url, data=data, timeout=10)
+        r = requests.post(url, data=data, timeout=10)
+        print("ارسال پست:", title)
     except Exception as e:
         print(f"خطا در ارسال پیام: {e}")
 
@@ -44,13 +46,11 @@ def check_feeds():
     for feed_url in RSS_FEED_URLS:
         feed = feedparser.parse(feed_url)
         for entry in feed.entries:
-            if not hasattr(entry, "title") or not hasattr(entry, "link"):
-                continue  # اگر عنوان یا لینک نداره، بیخیالش
+            title = getattr(entry, "title", "بدون عنوان")
+            link = getattr(entry, "link", None)
+            if not link:
+                continue
 
-            title = entry.title
-            link = entry.link
-
-            # بررسی وجود تصویر
             image_url = None
             if "media_content" in entry:
                 media = entry.media_content
@@ -58,9 +58,6 @@ def check_feeds():
                     image_url = media[0]["url"]
             elif "image" in entry and entry.image:
                 image_url = entry.image
-
-            if not image_url:
-                continue  # اگه عکس هم نداره، بیخیالش
 
             if link not in sent_links:
                 send_to_telegram(title, link, image_url)
