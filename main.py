@@ -77,3 +77,6 @@ def check_feeds():
             except Exception as e:
                 print(f"خطا در بررسی {feed_url}: {e}")
         time.sleep(CHECK_INTERVAL)
+git add .
+git commit -m "Update feeds and bot config"
+git push origin main
