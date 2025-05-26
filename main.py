@@ -8,7 +8,11 @@ import logging
 # ---------- تنظیمات ----------
 TELEGRAM_TOKEN = '7239519330:AAFaVbAsE1V-jQX4wQN9-BGO4-dXluv1aus'
 CHAT_ID = '7757886535'
-RSS_FEED_URL = 'https://example.com/rss.xml'
+RSS_FEED_URLS = [
+    "https://rss.app/feeds/UwEFld8FM84WyGkc.xml",
+    "https://rss.app/feeds/ktIrhXzHl648lXd4.xml",
+    "https://rss.app/feeds/5EZtkXHJhUIKZuJS.xml"
+]
 CHECK_INTERVAL = 30  # هر چند ثانیه یک بار بررسی شود
 
 sent_entries = set()
