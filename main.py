@@ -7,7 +7,7 @@ import logging
 import os
 
 # ---------- تنظیمات ----------
-TELEGRAM_TOKEN = '7239519330:AAFaVbAsE1V-jQX4wQN9-BGO4-dXluv1aus'
+TELEGRAM_TOKEN = '8124991049:AAHW-FH8gBIR8fBn2jvJh2ww3tuBuGtdktA'
 CHAT_ID = '7757886535'
 RSS_FEED_URLS = [
     'https://rss.app/feeds/UwEFld8FM84WyGkc.xml',
