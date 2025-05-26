@@ -44,19 +44,25 @@ def check_feeds():
     for feed_url in RSS_FEED_URLS:
         feed = feedparser.parse(feed_url)
         for entry in feed.entries:
+            if not hasattr(entry, "title") or not hasattr(entry, "link"):
+                continue  # اگر عنوان یا لینک نداره، بیخیالش
+
+            title = entry.title
             link = entry.link
+
+            # بررسی وجود تصویر
+            image_url = None
+            if "media_content" in entry:
+                media = entry.media_content
+                if media and "url" in media[0] and media[0]["url"]:
+                    image_url = media[0]["url"]
+            elif "image" in entry and entry.image:
+                image_url = entry.image
+
+            if not image_url:
+                continue  # اگه عکس هم نداره، بیخیالش
+
             if link not in sent_links:
-                title = entry.title
-                image_url = None
-
-                # تلاش برای پیدا کردن عکس
-                if "media_content" in entry:
-                    media = entry.media_content
-                    if media and "url" in media[0]:
-                        image_url = media[0]["url"]
-                elif "image" in entry:
-                    image_url = entry.image
-
                 send_to_telegram(title, link, image_url)
                 sent_links.add(link)
 
