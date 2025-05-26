@@ -8,11 +8,11 @@ from flask import Flask
 BOT_TOKEN = "7239519330:AAFaVbAsE1V-jQ4wQN9-BGO4-dXluv1aus"
 CHAT_ID = "-4665447944"
 RSS_FEED_URLS = [
-    "https://rss.app/feeds/UwEFld8FM84WyGkc.xml"
-    "https://rss.app/feeds/ktIrhXzHl648lXd4.xml"
-    "https://rss.app/feeds/5EZtkXHJhUIKZuJS.xml"
+    "https://rss.app/feeds/UwEFld8FM84WyGkc.xml",
+    "https://rss.app/feeds/ktIrhXzHl648lXd4.xml",
+    "https://rss.app/feeds/5EZtkXHJhUIKZuJS.xml"
 ]
-CHECK_INTERVAL = 30  # ثانیه
+CHECK_INTERVAL = 30  # ثانیه
 
 # === پست‌های ارسال‌شده ===
 sent_posts = set()
