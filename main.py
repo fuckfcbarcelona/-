@@ -1,6 +1,6 @@
 import requests
 
-bot_token = '8124991049:AAHW-FH8gBIR8fBn2jvJh2ww3tuBuGtdktA'
+bot_token = '7239519330:AAFaVbAsE1V-jQX4wQN9-BGO4-dXluv1aus'
 chat_id = '7757886535'
 message = 'سلام! این یه تست از main.py هست.'
 
