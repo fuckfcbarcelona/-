@@ -1,9 +1,9 @@
-import threading
 import time
-import feedparser
 import requests
+import feedparser
 from flask import Flask
 
+# تنظیمات
 BOT_TOKEN = "7239519330:AAFaVbAsE1V-jQ4wQN9-BGO4-dXluv1aus"
 CHAT_ID = "-4665447944"
 RSS_FEED_URLS = [
@@ -12,58 +12,67 @@ RSS_FEED_URLS = [
     "https://rss.app/feeds/5EZtkXHJhUIKZuJS.xml"
 ]
 
-app = Flask(__name__)
+# ذخیره لینک خبرهای ارسال شده
 sent_links = set()
 
-def send_telegram_message(text, image_url=None):
+# تابع ارسال پیام به تلگرام
+def send_to_telegram(title, link, image_url=None):
+    message = f"<b>{title}</b>\n<a href='{link}'>مطالعه خبر</a>"
+    data = {
+        "chat_id": CHAT_ID,
+        "caption": message,
+        "parse_mode": "HTML"
+    }
     if image_url:
+        data["photo"] = image_url
         url = f"https://api.telegram.org/bot{BOT_TOKEN}/sendPhoto"
-        payload = {
-            "chat_id": CHAT_ID,
-            "caption": text,
-            "photo": image_url
-        }
     else:
-        url = f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage"
-        payload = {
+        data = {
             "chat_id": CHAT_ID,
-            "text": text
+            "text": message,
+            "parse_mode": "HTML"
         }
+        url = f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage"
+
     try:
-        requests.post(url, data=payload)
+        requests.post(url, data=data, timeout=10)
     except Exception as e:
-        print("Error sending message:", e)
+        print(f"خطا در ارسال پیام: {e}")
 
-def extract_image(entry):
-    try:
-        if 'media_content' in entry:
-            return entry.media_content[0]['url']
-        elif 'enclosures' in entry and entry.enclosures:
-            return entry.enclosures[0].href
-        elif 'image' in entry:
-            return entry.image.href
-    except:
-        return None
-    return None
+# تابع بررسی فیدها
+def check_feeds():
+    for feed_url in RSS_FEED_URLS:
+        feed = feedparser.parse(feed_url)
+        for entry in feed.entries:
+            link = entry.link
+            if link not in sent_links:
+                title = entry.title
+                image_url = None
 
-def check_rss():
-    while True:
-        for url in RSS_FEED_URLS:
-            feed = feedparser.parse(url)
-            for entry in feed.entries:
-                link = getattr(entry, "link", None)
-                if link and link not in sent_links:
-                    title = getattr(entry, "title", "بدون عنوان")
-                    image = extract_image(entry)
-                    message = f"{title}\n{link}"
-                    send_telegram_message(message, image)
-                    sent_links.add(link)
-        time.sleep(60)
+                # تلاش برای پیدا کردن عکس
+                if "media_content" in entry:
+                    media = entry.media_content
+                    if media and "url" in media[0]:
+                        image_url = media[0]["url"]
+                elif "image" in entry:
+                    image_url = entry.image
+
+                send_to_telegram(title, link, image_url)
+                sent_links.add(link)
+
+# اجرای دائم
+app = Flask(__name__)
 
 @app.route('/')
 def home():
-    return "Bot is running!"
+    return "RSS to Telegram bot is running!"
 
-if __name__ == '__main__':
-    threading.Thread(target=check_rss, daemon=True).start()
+def run_bot_loop():
+    while True:
+        check_feeds()
+        time.sleep(30)
+
+if __name__ == "__main__":
+    import threading
+    threading.Thread(target=run_bot_loop).start()
     app.run(host="0.0.0.0", port=10000)
