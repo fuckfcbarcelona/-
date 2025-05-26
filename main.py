@@ -1,4 +1,4 @@
-import time
+۷import time
 import threading
 import feedparser
 import requests
@@ -66,3 +66,14 @@ def home():
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=10000)
+def check_feeds():
+    while True:
+        print("====== بررسی RSS ها شروع شد ======")
+        for feed_url in FEEDS:
+            try:
+                print(f"بررسی: {feed_url}")
+                feed = feedparser.parse(feed_url)
+                # بررسی پست‌های جدید و ارسال پیام...
+            except Exception as e:
+                print(f"خطا در بررسی {feed_url}: {e}")
+        time.sleep(CHECK_INTERVAL)
